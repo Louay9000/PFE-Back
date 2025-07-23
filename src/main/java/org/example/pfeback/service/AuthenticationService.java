@@ -5,10 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.example.pfeback.exceptions.BusinessException;
 import org.example.pfeback.exceptions.ManagerAlreadyExistsException;
 import org.example.pfeback.exceptions.CapacityExceededException;
-import org.example.pfeback.model.AuthenticationResponse;
-import org.example.pfeback.model.Department;
-import org.example.pfeback.model.Role;
-import org.example.pfeback.model.User;
+import org.example.pfeback.model.*;
 import org.example.pfeback.repository.DepartmentRepository;
 import org.example.pfeback.repository.UserRepository;
 import org.springframework.data.domain.Sort;
@@ -20,8 +17,16 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 
@@ -36,12 +41,20 @@ public class AuthenticationService {
 
 
 
-    public AuthenticationService(UserRepository repository, PasswordEncoder passwordEncoder, JwtService jwtService, AuthenticationManager authenticationManager,DepartmentRepository departmentRepository) {
+
+    public AuthenticationService(UserRepository repository,
+                                 PasswordEncoder passwordEncoder,
+                                 JwtService jwtService,
+                                 AuthenticationManager authenticationManager,
+                                 DepartmentRepository departmentRepository
+                                ) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
         this.departmentRepository=departmentRepository;
+
+
     }
 
 
@@ -231,12 +244,20 @@ public class AuthenticationService {
     }
 
 
-
-
     public List<User> getAllUsers() {
         return repository.findAll(Sort.by(Sort.Direction.ASC, "department.departmentName"));
     }
 
 
+    public String getDepartmentNameByUserId(Integer userId) {
+        Optional<User> user = repository.findById(userId);
+        if (user.isPresent() && user.get().getDepartment() != null) {
+            return user.get().getDepartment().getDepartmentName();
+        }
+        return null;
+    }
+    public Integer getImageIdByUserId(Integer userId) {
+        return repository.findImageIdByUserId(userId);
+    }
 
 }

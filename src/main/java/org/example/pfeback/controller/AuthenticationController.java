@@ -7,17 +7,39 @@ import org.example.pfeback.exceptions.CapacityExceededException;
 import org.example.pfeback.exceptions.ManagerAlreadyExistsException;
 import org.example.pfeback.model.AuthenticationResponse;
 import org.example.pfeback.model.Department;
+import org.example.pfeback.model.Image;
 import org.example.pfeback.model.User;
+import org.example.pfeback.repository.UserRepository;
 import org.example.pfeback.service.AuthenticationService;
+import org.example.pfeback.service.CloudinaryService;
+import org.example.pfeback.service.ImageService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 
 @RestController
 public class AuthenticationController {
+
+    @Autowired
+    private CloudinaryService cloudinaryService;
+
+    @Autowired
+    private ImageService imageService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+
 
 
     private final AuthenticationService authService;
@@ -78,6 +100,61 @@ public class AuthenticationController {
 
         User result = authService.updateUser(id, updatedUser);
         return ResponseEntity.ok(result);
+    }
+
+
+    @PostMapping("/{userId}/upload-image")
+    public ResponseEntity<?> uploadUserImage(
+            @PathVariable Integer userId,
+            @RequestParam("file") MultipartFile multipartFile) {
+        try {
+            Optional<User> optionalUser = userRepository.findById(userId);
+            if (optionalUser.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Utilisateur non trouvé !");
+            }
+            BufferedImage bi = ImageIO.read(multipartFile.getInputStream());
+            if (bi == null) {
+                return ResponseEntity.badRequest().body("Fichier non valide !");
+            }
+            // Upload sur Cloudinary
+            Map result = cloudinaryService.upload(multipartFile);
+            Image image = new Image(
+                    (String) result.get("original_filename"),
+                    (String) result.get("url"),
+                    (String) result.get("public_id")
+            );
+
+            imageService.save(image); // Sauvegarder dans la base
+
+            // Associer à l'utilisateur
+            User user = optionalUser.get();
+            user.setImage(image);
+            userRepository.save(user);
+
+            return ResponseEntity.ok("Image uploadée et associée avec succès !");
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de l’upload.");
+        }
+    }
+
+    @GetMapping("/{id}/department-name")
+    public ResponseEntity<String> getDepartmentName(@PathVariable Integer id) {
+        String deptName = authService.getDepartmentNameByUserId(id);
+        if (deptName != null) {
+            return ResponseEntity.ok(deptName);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/{id}/image-id")
+    public ResponseEntity<Integer> getImageId(@PathVariable Integer id) {
+        Integer imageId = authService.getImageIdByUserId(id);
+        if (imageId != null) {
+            return ResponseEntity.ok(imageId);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
 
