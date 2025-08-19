@@ -27,7 +27,4 @@ public class Department {
     private Long departmentCapacity;
 
 
-
-
-
 }

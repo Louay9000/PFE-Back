@@ -1,6 +1,7 @@
 package org.example.pfeback.service;
 
 
+import lombok.RequiredArgsConstructor;
 import org.example.pfeback.DTO.TaskDTO;
 import org.example.pfeback.DTO.UserDTO;
 import org.example.pfeback.model.*;
@@ -12,10 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class TaskService {
 
     @Autowired
@@ -26,9 +27,29 @@ public class TaskService {
     private UserRepository userRepository;
 
 
-    public List<Task> getAllTasks() {
-        return taskRepository.findAll(Sort.by(Sort.Direction.DESC,"taskWeight"));
+    public List<Task> getAllTasks(Role role, Integer userId) {
+        Optional<User> connectedUserOptional = userRepository.findById(userId);
+
+        if (connectedUserOptional.isEmpty()) {
+            return new ArrayList<>(); // ou tu peux lever une exception personnalisée
+        }
+
+        User connectedUser = connectedUserOptional.get();
+
+        // Vérification du rôle
+        if (role == Role.ADMIN) {
+            return taskRepository.findAll(Sort.by(Sort.Direction.DESC, "taskWeight"));
+        } else if (role == Role.MANAGER) {
+            Long departmentId = connectedUser.getDepartment().getId(); // Long ici ✅
+
+            return taskRepository.findByUserRoleAndUserDepartmentId(
+                    Role.EMPLOYEE, departmentId, Sort.by(Sort.Direction.DESC, "taskWeight"));
+        }
+
+        // EMPLOYEE ou autre : retourne ses propres tâches (optionnel)
+        return taskRepository.findByUserId(userId, Sort.by(Sort.Direction.DESC, "taskWeight"));
     }
+
 
 
     public Task createTask(Task task , Long okrId , Integer userId) {
@@ -41,8 +62,17 @@ public class TaskService {
         task.setUser(user);
         task.setOkr(okr);
         return taskRepository.save(task);
-
     }
+
+    public Task createTaskAndAssign(Task task, Long departmentId, Integer userId) {
+        List<Long> okrIds = okrRepository.findOkrIdsByDepartmentId(departmentId);
+        if (okrIds == null || okrIds.isEmpty()) {
+            throw new RuntimeException("No OKR found for department ID: " + departmentId);
+        }
+        Long okrId = okrIds.get(0);
+        return createTask(task, okrId, userId);
+    }
+
 
 
 
@@ -127,7 +157,47 @@ public class TaskService {
 
 
     public List<Task> getTasksByUserId(Integer userId) {
-        return taskRepository.findByUserId(userId);
+        return taskRepository.findTasksByUserIdOrderByWeightDesc(userId);
+    }
+
+    public Map<Status, Long> getObjectiveCountByStatus() {
+        List<Object[]> results = taskRepository.countTasksByStatus();
+        Map<Status, Long> stats = new HashMap<>();
+        for (Object[] row : results) {
+            Status status = (Status) row[0];
+            Long count = (Long) row[1];
+            stats.put(status, count);
+        }
+        return stats;
+    }
+
+    public User getUserWithMostReachedTasks() {
+        List<Object[]> result = taskRepository.findTopUsersByReachedTasks();
+        if (!result.isEmpty()) {
+            return (User) result.get(0)[0];
+        }
+        return null;
+    }
+
+    public List<Task> getTasksByDepartmentId(Long departmentId) {
+        return taskRepository.findByUser_Department_Id(departmentId);
+    }
+
+    public Map<String, Long> getTaskStatusCountByUserId(Long userId) {
+        List<Object[]> results = taskRepository.countTaskStatusByUserId(userId);
+        Map<String, Long> statusCount = new HashMap<>();
+
+        for (Object[] row : results) {
+            String status = row[0].toString(); // Status enum as String
+            Long count = (Long) row[1];
+            statusCount.put(status, count);
+        }
+
+        return statusCount;
+    }
+
+    public List<Object[]> getTasksForML() {
+        return taskRepository.getTasksForML();
     }
 
 

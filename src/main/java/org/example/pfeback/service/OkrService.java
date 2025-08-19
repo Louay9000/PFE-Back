@@ -22,6 +22,8 @@ public class OkrService {
     private ObjectiveRepository objectiveRepository;
     @Autowired
     private DepartmentRepository departmentRepository;
+    @Autowired
+    private ObjectiveService objectiveService;
 
 
 
@@ -77,8 +79,27 @@ public class OkrService {
             existingOkr.setObjective(objective);
         }
 
-        return okrRepository.save(existingOkr);
+        // Sauvegarder l'OKR
+        Okr savedOkr = okrRepository.save(existingOkr);
+
+        // ✅ Mise à jour du statut de l’objectif (après avoir sauvegardé)
+        Long relatedObjectiveId = (objectiveId != null)
+                ? objectiveId
+                : existingOkr.getObjective().getId();
+
+        objectiveService.updateObjectiveStatusIfOkrsReached(relatedObjectiveId);
+
+        return savedOkr;
     }
 
+
+
+    public List<Long> getOkrIdsByDepartmentId(Long departmentId) {
+        return okrRepository.findOkrIdsByDepartmentId(departmentId);
+    }
+
+    public List<Okr> getOkrsByDepartment(Long departmentId) {
+        return okrRepository.findByDepartmentId(departmentId);
+    }
 
 }

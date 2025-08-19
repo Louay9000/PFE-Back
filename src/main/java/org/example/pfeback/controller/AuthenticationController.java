@@ -5,10 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.example.pfeback.DTO.UserDTO;
 import org.example.pfeback.exceptions.CapacityExceededException;
 import org.example.pfeback.exceptions.ManagerAlreadyExistsException;
-import org.example.pfeback.model.AuthenticationResponse;
-import org.example.pfeback.model.Department;
-import org.example.pfeback.model.Image;
-import org.example.pfeback.model.User;
+import org.example.pfeback.model.*;
 import org.example.pfeback.repository.UserRepository;
 import org.example.pfeback.service.AuthenticationService;
 import org.example.pfeback.service.CloudinaryService;
@@ -16,6 +13,7 @@ import org.example.pfeback.service.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -63,10 +61,10 @@ public class AuthenticationController {
     }
 
 
-    @GetMapping
-    public List<User> getAllUsers()
-    {
-        return authService.getAllUsers();
+    @GetMapping("/{role}/{userId}")
+    public ResponseEntity<List<User>> getUsers(@PathVariable Role role , @PathVariable Integer userId) {
+        List<User> users = authService.getAllUsers(role, userId);
+        return ResponseEntity.ok(users);
     }
 
 
@@ -94,6 +92,7 @@ public class AuthenticationController {
         updatedUser.setFirstname(updatedUserDto.getFirstname());
         updatedUser.setLastname(updatedUserDto.getLastname());
         updatedUser.setUsername(updatedUserDto.getUsername());
+        updatedUser.setEmail(updatedUserDto.getEmail());
         updatedUser.setPassword(updatedUserDto.getPassword());
         updatedUser.setRole(updatedUserDto.getRole());
         updatedUser.setDepartment(updatedUserDto.getDepartment());
@@ -156,6 +155,20 @@ public class AuthenticationController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @GetMapping("/{userId}/department-id")
+    public ResponseEntity<Long> getDepartmentIdByUserId(@PathVariable Integer userId) {
+        Long departmentId = authService.getDepartmentIdByUserId(userId);
+        return ResponseEntity.ok(departmentId);
+    }
+
+
+    @GetMapping("/{userId}/email")
+    public ResponseEntity<String> getEmailByUserId(@PathVariable Integer userId) {
+        String email = authService.getEmailByUserId(userId);
+        return ResponseEntity.ok(email);
+    }
+
 
 
     @ExceptionHandler(ManagerAlreadyExistsException.class)

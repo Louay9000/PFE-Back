@@ -12,7 +12,10 @@ import java.util.Optional;
 
 
 public interface UserRepository  extends JpaRepository<User,Integer> {
+
     Optional<User> findByUsername(String username);
+
+    List<User> findByDepartmentId(Long departmentId);
 
     boolean existsByDepartmentIdAndRole(Long departmentId, Role role);
 
@@ -22,13 +25,14 @@ public interface UserRepository  extends JpaRepository<User,Integer> {
 
     List<User> findByDepartmentIdAndRole(Long departmentId, Role role);
 
-    @Query("SELECT u.department.departmentName FROM User u WHERE u.id = :userId")
-    String findDepartmentNameByUserId(@Param("userId") Integer userId);
-
     @Query("SELECT u.image.id FROM User u WHERE u.id = :userId")
     Integer findImageIdByUserId(@Param("userId") Integer userId);
 
+    @Query("SELECT u.department.id FROM User u WHERE u.id = :userId")
+    Long getDepartmentIdByUserId(@Param("userId") Integer userId);
 
+    @Query("SELECT u.email FROM User u WHERE u.id = :userId")
+    String getEmailByUserId(Integer userId);
 
 
 

@@ -2,6 +2,7 @@ package org.example.pfeback.controller;
 
 
 import org.example.pfeback.model.Objective;
+import org.example.pfeback.model.Status;
 import org.example.pfeback.repository.ObjectiveRepository;
 import org.example.pfeback.service.ObjectiveService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -49,6 +51,9 @@ public class ObjectiveController {
     }
 
 
-
+    @GetMapping("/stats/status")
+    public Map<Status, Long> getObjectivesCountByStatus() {
+        return objectiveService.getObjectiveCountByStatus();
+    }
 
 }

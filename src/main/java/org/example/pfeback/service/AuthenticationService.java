@@ -42,18 +42,18 @@ public class AuthenticationService {
 
 
 
+
     public AuthenticationService(UserRepository repository,
                                  PasswordEncoder passwordEncoder,
                                  JwtService jwtService,
                                  AuthenticationManager authenticationManager,
-                                 DepartmentRepository departmentRepository
-                                ) {
+                                 DepartmentRepository departmentRepository)
+ {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
         this.departmentRepository=departmentRepository;
-
 
     }
 
@@ -82,6 +82,7 @@ public class AuthenticationService {
         user.setFirstname(request.getFirstname());
         user.setLastname(request.getLastname());
         user.setUsername(request.getUsername());
+        user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(request.getRole());
         user.setDepartment(department);
@@ -234,6 +235,7 @@ public class AuthenticationService {
         existingUser.setFirstname(updatedUser.getFirstname());
         existingUser.setLastname(updatedUser.getLastname());
         existingUser.setUsername(updatedUser.getUsername());
+        existingUser.setEmail(updatedUser.getEmail());
         existingUser.setRole(updatedUser.getRole());
 
         if (!updatedUser.getPassword().equals(existingUser.getPassword())) {
@@ -244,9 +246,22 @@ public class AuthenticationService {
     }
 
 
-    public List<User> getAllUsers() {
-        return repository.findAll(Sort.by(Sort.Direction.ASC, "department.departmentName"));
+    public List<User> getAllUsers(Role role, Integer userId) {
+        Optional<User> user = repository.findById(userId);
+        if (role == Role.ADMIN) {
+            // ADMIN : voit tous les utilisateurs triés par nom de département
+            return repository.findAll(Sort.by(Sort.Direction.ASC, "department.departmentName"));
+        }
+
+        if (role == Role.MANAGER) {
+            // MANAGER : voit uniquement les utilisateurs de son département
+            return repository.findByDepartmentId(user.get().getDepartment().getId());
+        }
+
+        // EMPLOYEE ou rôle non reconnu : retour vide
+        return List.of();
     }
+
 
 
     public String getDepartmentNameByUserId(Integer userId) {
@@ -256,8 +271,21 @@ public class AuthenticationService {
         }
         return null;
     }
+
+
     public Integer getImageIdByUserId(Integer userId) {
         return repository.findImageIdByUserId(userId);
     }
+
+    public Long getDepartmentIdByUserId(Integer userId) {
+        return repository.getDepartmentIdByUserId(userId);
+    }
+
+    public String getEmailByUserId(Integer userId) {
+        return repository.getEmailByUserId(userId);
+    }
+
+
+
 
 }

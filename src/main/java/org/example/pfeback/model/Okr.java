@@ -39,6 +39,4 @@ public class Okr {
     private Department department;
 
 
-
-
 }

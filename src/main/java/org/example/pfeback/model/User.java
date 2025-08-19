@@ -30,6 +30,9 @@ public class User  implements UserDetails {
     @Column(name= "username")
     private String username;
 
+    @Column(name="email")
+    private String email;
+
     @Column(name="password")
     private String password;
 
@@ -70,10 +73,6 @@ public class User  implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role.name()));
     }
-
-
-
-
 
 
 }
