@@ -38,10 +38,22 @@ public class OkrService {
         Objective objective = objectiveRepository.findById(objectiveId)
                 .orElseThrow(() -> new RuntimeException("Objective not found"));
 
-        okr.setDepartment(department);
-        okr.setObjective(objective);
+        // Vérification règle métier
+        boolean exists = okrRepository.existsByObjectiveAndDepartment(objective, department);
+        if (exists) {
+            throw new IllegalArgumentException(
+                    "⚠️ Le département '" + department.getDepartmentName() +
+                            "' est déjà utilisé pour l'objectif '" + objective.getObjectiveTitle() + "'"
+            );
+        }
+        else {
+            okr.setDepartment(department);
+            okr.setObjective(objective);
 
-        return okrRepository.save(okr);
+            return okrRepository.save(okr);
+        }
+
+
     }
 
 

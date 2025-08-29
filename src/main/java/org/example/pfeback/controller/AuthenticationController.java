@@ -26,6 +26,7 @@ import java.util.Optional;
 
 
 @RestController
+@RequestMapping("/users")
 public class AuthenticationController {
 
     @Autowired
@@ -36,9 +37,6 @@ public class AuthenticationController {
 
     @Autowired
     private UserRepository userRepository;
-
-
-
 
     private final AuthenticationService authService;
 

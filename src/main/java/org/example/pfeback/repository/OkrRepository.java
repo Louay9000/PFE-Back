@@ -1,5 +1,7 @@
 package org.example.pfeback.repository;
 
+import org.example.pfeback.model.Department;
+import org.example.pfeback.model.Objective;
 import org.example.pfeback.model.Okr;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,6 +16,8 @@ public interface OkrRepository extends JpaRepository <Okr,Long> {
     List<Okr> findByDepartmentId(Long departmentId);
 
     List<Okr> findByObjectiveId(Long objectiveId);
+
+    boolean existsByObjectiveAndDepartment(Objective objective, Department department);
 
 
 

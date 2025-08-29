@@ -258,6 +258,12 @@ public class AuthenticationService {
             return repository.findByDepartmentId(user.get().getDepartment().getId());
         }
 
+
+        if (role == Role.EMPLOYEE) {
+            // MANAGER : voit uniquement les utilisateurs de son département
+            return repository.findByDepartmentId(user.get().getDepartment().getId());
+        }
+
         // EMPLOYEE ou rôle non reconnu : retour vide
         return List.of();
     }

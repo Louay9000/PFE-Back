@@ -34,7 +34,7 @@ public class Okr {
     @JoinColumn(name="objective_id")
     private Objective objective;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name="department_id")
     private Department department;
 
